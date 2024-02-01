@@ -171,31 +171,42 @@ interface GlobeProps {
   displacement: number;
   populationIndex: { [key: string]: number };
   animate: boolean;
+  setDisplacement: React.Dispatch<React.SetStateAction<number>>;
 }
 
-export const Globe: FC<GlobeProps> = (props) => {
+export const Globe: FC<GlobeProps> = ({
+  displacement,
+  populationIndex,
+  animate,
+  setDisplacement,
+}) => {
   const [hovered, setHover] = useState<boolean>(false);
-  const [active, setActive] = useState<boolean>(false);
 
   const viz = useMemo(
-    () => <DataViz {...props} />,
-    [props.displacement, props.populationIndex, props.animate]
+    () => (
+      <DataViz
+        displacement={displacement}
+        populationIndex={populationIndex}
+        animate={animate}
+        setDisplacement={setDisplacement}
+      />
+    ),
+    [displacement, populationIndex, animate, setDisplacement]
   );
 
   return (
-    <Canvas raycaster={{ params: { Line: { threshold: 5 } } }}>
+    <Canvas>
       <color attach="background" args={["lightblue"]} />
-      <ambientLight />
-      <pointLight position={[10, 10, 10]} />
+      <ambientLight intensity={5} />
       <Controls>
         {viz}
         <mesh
           position={[0, 0, 0]}
-          scale={!active ? [2, 2, 2] : [1, 1, 1]}
+          scale={[2, 2, 2]}
           onPointerOver={() => setHover(true)}
           onPointerOut={() => setHover(false)}
         >
-          {/* <sphereBufferGeometry attach="geometry" args={[1, 12, 12]} /> */}
+          <sphereGeometry attach="geometry" args={[1, 12, 12]} />
           <meshStandardMaterial color={hovered ? "hotpink" : "orange"} />
         </mesh>
       </Controls>

@@ -21,7 +21,7 @@ function App() {
   const [data, setData] = useState(null);
   const [displacement, setDisplacement] = useState(1);
   const [animate, setAnimate] = useState(false);
-  const [year, setYear] = useState(null);
+  const [year, setYear] = useState<string>("");
 
   useEffect(() => {
     window
@@ -65,7 +65,9 @@ function App() {
                 <p className="text-sm text-gray-500">Population by year</p>
               </div>
               <div
-                onChange={(ev) => setYear(ev.target.value)}
+                onChange={(ev: React.ChangeEvent<HTMLInputElement>) => {
+                  return setYear(ev.target.value);
+                }}
                 className="mt-4 space-y-4"
               >
                 {years.map((y) => {
