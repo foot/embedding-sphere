@@ -24,28 +24,65 @@ function toIndex(data: DataInput[]): PopulationIndex {
   return populationIndex;
 }
 
+// 'ProductId', 'UserId', 'Score', 'Summary', 'Text', 'combined', 'n_tokens', 'embedding', 'theta', 'phi', 'lat', 'lng'
+interface EmbeddingEntry {
+  ProductId: string;
+  UserId: string;
+  Score: number;
+  Summary: string;
+  Text: string;
+  combined: string;
+  n_tokens: number;
+  embedding: number[];
+  theta: number;
+  phi: number;
+  lat: number;
+  lng: number;
+}
+type EmbeddingsData = EmbeddingEntry[];
+
+function toIndexFromEmbeddings(
+  data: EmbeddingsData,
+  year: string
+): PopulationIndex {
+  const latLngIndex: LatLngIndex = {};
+
+  // calculate the max value for n_tokens
+  const maxNTokens = Math.max(...data.map((e) => e.n_tokens));
+
+  for (const entry of data) {
+    if (entry.theta === 0 && entry.phi === 0) {
+      continue;
+    }
+    latLngIndex[`${entry.lat},${entry.lng}`] = entry.n_tokens / maxNTokens;
+  }
+  return { [year]: latLngIndex };
+}
+
 function App() {
-  const [data, setData] = useState<PopulationIndex>({});
+  const [data, setData] = useState<PopulationIndex | null>(null);
   const [displacement, setDisplacement] = useState<number>(1);
   const [animate, setAnimate] = useState<boolean>(false);
-  const [year, setYear] = useState<string>("");
+  const [year, setYear] = useState<string>("2024");
 
   useEffect(() => {
     window
-      .fetch("./data/population909500.json")
+      .fetch("./fine_food_reviews_with_embeddings_1k_tsne.json")
       .then((res) => res.json())
-      .then((d) => {
-        const index = toIndex(d);
+      .then((d: EmbeddingsData) => {
+        const index = toIndexFromEmbeddings(d, year);
+        console.log({ index });
         setData(index);
-        setYear(keys(index)[0]);
       });
-  }, []);
+  }, [year]);
 
-  const years = keys(data).sort();
+  const years = [year];
 
   if (!data) {
     return "Loading...";
   }
+
+  console.log({ data });
 
   return (
     <div className="bg-gray-100 h-screen flex flex-col">

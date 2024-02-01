@@ -116,13 +116,10 @@ const DataViz: FC<DataVizProps> = ({
     <>
       <lineSegments ref={lineSegmentsRef}>
         <bufferGeometry attach="geometry">
+          <bufferAttribute attach="attributes-position" args={[positions, 3]} />
           <bufferAttribute
-            attach="attributes-position" // Note the change here
-            args={[positions, 3]} // Assuming positions is a Float32Array
-          />
-          <bufferAttribute
-            attach="attributes-population" // Updated to use the `attach` property correctly
-            args={[populationAttributes, 1]} // Assuming populationAttributes is a Float32Array
+            attach="attributes-population"
+            args={[populationAttributes, 1]}
           />
         </bufferGeometry>
         <shaderMaterial
