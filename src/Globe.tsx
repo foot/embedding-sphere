@@ -3,7 +3,6 @@ import React, {
   useState,
   useEffect,
   useMemo,
-  createContext,
   FC,
   MutableRefObject,
 } from "react";
@@ -14,6 +13,7 @@ import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
 import { blueRed } from "./shaders";
 import { range, flatten } from "lodash";
+import { LineSegments, ShaderMaterial } from "three";
 
 extend({ OrbitControls, EffectComposer, RenderPass, ShaderPass });
 
@@ -51,7 +51,8 @@ const DataViz: FC<DataVizProps> = ({
   displacement,
   populationIndex,
 }) => {
-  const lineSegmentsRef: MutableRefObject<any> = useRef();
+  const lineSegmentsRef: MutableRefObject<LineSegments | null> = useRef(null);
+
   const [dd, setDD] = useState<number>(0.01);
   const animateRef: MutableRefObject<boolean> = useRef(animate);
 
@@ -103,8 +104,7 @@ const DataViz: FC<DataVizProps> = ({
 
   useEffect(() => {
     const { current } = lineSegmentsRef;
-    if (current) {
-      current.material.uniformsNeedUpdate = true;
+    if (current && current.material instanceof ShaderMaterial) {
       current.geometry.attributes.population.needsUpdate = true;
       current.material.uniforms.displacementA.value = displacement;
     }
@@ -136,11 +136,8 @@ const DataViz: FC<DataVizProps> = ({
   );
 };
 
-const camContext = createContext(null);
-
 const Controls: FC<ControlsProps> = ({ children }) => {
   const { gl, camera, invalidate } = useThree();
-  const [enabled, setEnabled] = useState<boolean>(true);
   const controlsRef = useRef<OrbitControls>(null);
 
   useEffect(() => {
@@ -158,11 +155,8 @@ const Controls: FC<ControlsProps> = ({ children }) => {
         ref={controlsRef}
         args={[camera, gl.domElement]}
         enableDamping
-        enabled={enabled}
       />
-      <camContext.Provider value={[enabled, setEnabled]}>
-        {children}
-      </camContext.Provider>
+      {children}
     </>
   );
 };

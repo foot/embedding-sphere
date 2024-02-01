@@ -3,14 +3,21 @@ import { chunk, fromPairs, keys } from "lodash";
 import "./App.css";
 import { Globe } from "./Globe";
 
-function toIndex(data) {
-  // { [year]: { [latlng]: v } }}
-  const populationIndex = fromPairs(
-    data.map(([year, d]) => {
-      const latLngIndex = fromPairs(
-        chunk(d, 3).map(([lat, lng, v]) => [[lat, lng], v])
+type Year = number;
+type DataInput = [Year, number[]];
+type LatLngIndex = { [key: string]: number };
+type PopulationIndex = { [year: string]: LatLngIndex };
+
+function toIndex(data: DataInput[]): PopulationIndex {
+  const populationIndex: PopulationIndex = fromPairs(
+    data.map(([year, d]): [string, LatLngIndex] => {
+      const latLngIndex: LatLngIndex = fromPairs(
+        chunk(d, 3).map(([lat, lng, v]): [string, number] => [
+          `${lat},${lng}`,
+          v,
+        ])
       );
-      return [year, latLngIndex];
+      return [year.toString(), latLngIndex]; // Ensuring year is a string for the key
     })
   );
 
@@ -18,7 +25,7 @@ function toIndex(data) {
 }
 
 function App() {
-  const [data, setData] = useState(null);
+  const [data, setData] = useState<PopulationIndex>({});
   const [displacement, setDisplacement] = useState(1);
   const [animate, setAnimate] = useState(false);
   const [year, setYear] = useState<string>("");
