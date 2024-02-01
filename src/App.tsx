@@ -17,7 +17,7 @@ function toIndex(data: DataInput[]): PopulationIndex {
           v,
         ])
       );
-      return [year.toString(), latLngIndex]; // Ensuring year is a string for the key
+      return [year.toString(), latLngIndex];
     })
   );
 
@@ -26,8 +26,8 @@ function toIndex(data: DataInput[]): PopulationIndex {
 
 function App() {
   const [data, setData] = useState<PopulationIndex>({});
-  const [displacement, setDisplacement] = useState(1);
-  const [animate, setAnimate] = useState(false);
+  const [displacement, setDisplacement] = useState<number>(1);
+  const [animate, setAnimate] = useState<boolean>(false);
   const [year, setYear] = useState<string>("");
 
   useEffect(() => {
@@ -71,16 +71,14 @@ function App() {
                 </legend>
                 <p className="text-sm text-gray-500">Population by year</p>
               </div>
-              <div
-                onChange={(ev: React.ChangeEvent<HTMLInputElement>) => {
-                  return setYear(ev.target.value);
-                }}
-                className="mt-4 space-y-4"
-              >
+              <div className="mt-4 space-y-4">
                 {years.map((y) => {
                   return (
                     <div key={y} className="flex items-center">
                       <input
+                        onChange={(ev: React.ChangeEvent<HTMLInputElement>) => {
+                          return setYear(ev.target.value);
+                        }}
                         id={y}
                         name={y}
                         value={y}
