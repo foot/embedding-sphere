@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import "./App.css";
 import { Globe } from "./Globe";
+import OpenAI from "openai";
 
 type LatLngIndex = { [key: string]: number };
 
@@ -39,6 +40,24 @@ function App() {
   const [data, setData] = useState<LatLngIndex | null>(null);
   const [displacement, setDisplacement] = useState<number>(1);
   const [animate, setAnimate] = useState<boolean>(false);
+
+  useEffect(() => {
+    const openai = new OpenAI({
+      apiKey: import.meta.env["VITE_OPENAI_API_KEY"], // This is the default and can be omitted
+      dangerouslyAllowBrowser: true,
+    });
+
+    async function main() {
+      const chatCompletion = await openai.embeddings.create({
+        input: "This is a test",
+        model: "text-embedding-3-small",
+      });
+
+      console.log({ chatCompletion });
+    }
+
+    main();
+  }, []);
 
   useEffect(() => {
     window
