@@ -1,93 +1,14 @@
-import { useEffect, useMemo, useRef, useState } from "react";
 import { takeRight } from "lodash";
-import "./App.css";
+import { useEffect, useMemo, useState } from "react";
 import { Globe } from "./Globe";
-import { exampleQueries } from "./example-queries";
-import * as Plot from "@observablehq/plot";
-import * as d3 from "d3";
+import { exampleQueries } from "../helpers/example-queries";
 
-import OpenAI from "openai";
-
-type LatLngIndex = { [key: string]: number };
-
-interface EmbeddingEntry {
-  ProductId: string;
-  UserId: string;
-  Score: number;
-  Summary: string;
-  Text: string;
-  combined: string;
-  n_tokens: number;
-  embedding: string;
-  theta: number;
-  phi: number;
-  lat: number;
-  lng: number;
-}
-type EmbeddingsData = EmbeddingEntry[];
-
-function toIndexFromEmbeddings(
-  data: EmbeddingsData,
-  similaritiesData: { distance: number; index: number }[]
-): LatLngIndex {
-  const latLngIndex: LatLngIndex = {};
-
-  const similarities = similaritiesData.map((d) => d.distance);
-
-  const maxSimilarity = Math.max(...similarities);
-  const minSimilarity = Math.min(...similarities);
-
-  console.log({ minSimilarity, maxSimilarity });
-
-  const scale = d3
-    .scalePow()
-    .domain([minSimilarity, maxSimilarity])
-    .range([0, 1])
-    .exponent(5);
-
-  for (const [i, entry] of data.entries()) {
-    if (entry.theta === 0 && entry.phi === 0) {
-      continue;
-    }
-
-    latLngIndex[`${entry.lat},${entry.lng}`] = scale(similarities[i]);
-  }
-
-  return latLngIndex;
-}
-
-function cosineDistance(vecA: number[], vecB: number[]): number {
-  let dotProduct = 0.0;
-  let normA = 0.0;
-  let normB = 0.0;
-  for (let i = 0; i < vecA.length; i++) {
-    dotProduct += vecA[i] * vecB[i];
-    normA += vecA[i] * vecA[i];
-    normB += vecB[i] * vecB[i];
-  }
-
-  const similarity = dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
-  return similarity;
-}
-
-function PlotData({ index }: { index: LatLngIndex }) {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const data = Object.values(index);
-  data.sort();
-
-  useEffect(() => {
-    const plot = Plot.lineY(data).plot({
-      width: 400,
-      height: 200,
-      y: { grid: true },
-    });
-
-    containerRef.current?.append(plot);
-    return () => plot.remove();
-  }, [data]);
-
-  return <div ref={containerRef} />;
-}
+import {
+  EmbeddingsData,
+  cosineDistance,
+  toIndexFromEmbeddings,
+} from "../helpers/embeddings";
+import { PlotData } from "./Plot";
 
 function App() {
   const [embeddingsData, setEmbeddingsData] = useState<EmbeddingsData>([]);
@@ -96,24 +17,6 @@ function App() {
   const [selectedExampleQuery, setSelectedExampleQuery] = useState<string>(
     exampleQueries[0].query
   );
-
-  // useEffect(() => {
-  //   const openai = new OpenAI({
-  //     apiKey: import.meta.env["VITE_OPENAI_API_KEY"], // This is the default and can be omitted
-  //     dangerouslyAllowBrowser: true,
-  //   });
-
-  //   async function main() {
-  //     const chatCompletion = await openai.embeddings.create({
-  //       input: "i wanted a hot dog",
-  //       model: "text-embedding-3-small",
-  //     });
-
-  //     console.log({ chatCompletion });
-  //   }
-
-  //   main();
-  // }, []);
 
   useEffect(() => {
     window
@@ -125,6 +28,7 @@ function App() {
   }, []);
 
   const similaritiesData = useMemo(() => {
+    console.log("similaritiesData");
     const exampleQuery = exampleQueries.find(
       (e) => e.query === selectedExampleQuery
     );

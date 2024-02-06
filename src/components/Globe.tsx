@@ -11,7 +11,7 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
-import { blueRed } from "./shaders";
+import { blueRed } from "../shaders/shaders";
 import { range, flatten } from "lodash";
 import { LineSegments, ShaderMaterial } from "three";
 
