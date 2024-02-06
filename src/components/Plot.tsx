@@ -8,13 +8,18 @@ export function PlotData({ index }: { index: LatLngIndex }) {
   data.sort();
 
   useEffect(() => {
-    const plot = Plot.lineY(data).plot({
-      width: 400,
+    if (!containerRef.current) {
+      return;
+    }
+
+    const plot = Plot.plot({
       height: 200,
-      y: { grid: true },
+      width: 400,
+      grid: true,
+      marks: [Plot.lineY(data)],
     });
 
-    containerRef.current?.append(plot);
+    containerRef.current.append(plot);
     return () => plot.remove();
   }, [data]);
 
