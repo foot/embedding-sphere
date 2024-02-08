@@ -21,7 +21,10 @@ interface DataVizProps {
   animate: boolean;
   setDisplacement: React.Dispatch<React.SetStateAction<number>>;
   displacement: number;
-  populationIndex: { [key: string]: number };
+  similaritiesIndex: { [key: string]: number };
+  exponent: number;
+  minSimilarity: number;
+  maxSimilarity: number;
 }
 
 interface ControlsProps {
@@ -49,7 +52,10 @@ const DataViz: FC<DataVizProps> = ({
   animate,
   setDisplacement,
   displacement,
-  populationIndex,
+  similaritiesIndex,
+  exponent,
+  minSimilarity,
+  maxSimilarity,
 }) => {
   const lineSegmentsRef: MutableRefObject<LineSegments | null> = useRef(null);
 
@@ -74,11 +80,11 @@ const DataViz: FC<DataVizProps> = ({
     }
   });
 
-  const populationAttributes = useMemo(() => {
+  const similaritiesArrtibutes = useMemo(() => {
     return new Float32Array(
       lats.flatMap((lat) => {
         const latPositions = lngs.map(
-          (lng) => (populationIndex[`${lat},${lng}`] || 0) * 1
+          (lng) => (similaritiesIndex[`${lat},${lng}`] || 0.1) * 1
         );
         const latSegments = range(latPositions.length - 1).flatMap((i) => [
           latPositions[i],
@@ -87,7 +93,7 @@ const DataViz: FC<DataVizProps> = ({
         return flatten(latSegments);
       })
     );
-  }, [populationIndex]);
+  }, [similaritiesIndex]);
 
   const positions = useMemo(() => {
     return new Float32Array(
@@ -105,10 +111,12 @@ const DataViz: FC<DataVizProps> = ({
   useEffect(() => {
     const { current } = lineSegmentsRef;
     if (current && current.material instanceof ShaderMaterial) {
-      current.geometry.attributes.population.needsUpdate = true;
       current.material.uniforms.displacementA.value = displacement;
+      current.material.uniforms.exponent.value = exponent;
+      current.material.uniforms.minSimilarity.value = minSimilarity;
+      current.material.uniforms.maxSimilarity.value = maxSimilarity;
     }
-  }, [displacement]);
+  }, [displacement, exponent, minSimilarity, maxSimilarity]);
 
   const { uniforms, fragmentShader, vertexShader } = blueRed;
 
@@ -118,8 +126,8 @@ const DataViz: FC<DataVizProps> = ({
         <bufferGeometry attach="geometry">
           <bufferAttribute attach="attributes-position" args={[positions, 3]} />
           <bufferAttribute
-            attach="attributes-population"
-            args={[populationAttributes, 1]}
+            attach="attributes-similarities"
+            args={[similaritiesArrtibutes, 1]}
           />
         </bufferGeometry>
         <shaderMaterial
@@ -160,16 +168,22 @@ const Controls: FC<ControlsProps> = ({ children }) => {
 
 interface GlobeProps {
   displacement: number;
-  populationIndex: { [key: string]: number };
+  similaritiesIndex: { [key: string]: number };
   animate: boolean;
   setDisplacement: React.Dispatch<React.SetStateAction<number>>;
+  exponent: number;
+  minSimilarity: number;
+  maxSimilarity: number;
 }
 
 export const Globe: FC<GlobeProps> = ({
   displacement,
-  populationIndex,
+  similaritiesIndex,
   animate,
   setDisplacement,
+  exponent,
+  minSimilarity,
+  maxSimilarity,
 }) => {
   const [hovered, setHover] = useState<boolean>(false);
 
@@ -177,12 +191,23 @@ export const Globe: FC<GlobeProps> = ({
     () => (
       <DataViz
         displacement={displacement}
-        populationIndex={populationIndex}
+        similaritiesIndex={similaritiesIndex}
         animate={animate}
         setDisplacement={setDisplacement}
+        exponent={exponent}
+        minSimilarity={minSimilarity}
+        maxSimilarity={maxSimilarity}
       />
     ),
-    [displacement, populationIndex, animate, setDisplacement]
+    [
+      displacement,
+      similaritiesIndex,
+      animate,
+      setDisplacement,
+      exponent,
+      minSimilarity,
+      maxSimilarity,
+    ]
   );
 
   return (

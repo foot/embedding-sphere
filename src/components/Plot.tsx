@@ -14,7 +14,7 @@ export function PlotData({ index }: { index: LatLngIndex }) {
 
     const plot = Plot.plot({
       height: 200,
-      width: 400,
+      width: 300,
       grid: true,
       marks: [Plot.lineY(data)],
     });

@@ -1,5 +1,3 @@
-import * as d3 from "d3";
-
 export type LatLngIndex = { [key: string]: number };
 export interface EmbeddingEntry {
   ProductId: string;
@@ -23,27 +21,18 @@ export function toIndexFromEmbeddings(
 ): LatLngIndex {
   const latLngIndex: LatLngIndex = {};
 
-  const similarities = similaritiesData.map((d) => d.distance);
-
-  const maxSimilarity = Math.max(...similarities);
-  const minSimilarity = Math.min(...similarities);
-
-  const scale = d3
-    .scalePow()
-    .domain([minSimilarity, maxSimilarity])
-    .range([0, 1])
-    .exponent(3);
-
   for (const [i, entry] of data.entries()) {
     if (entry.theta === 0 && entry.phi === 0) {
       continue;
     }
 
-    latLngIndex[`${entry.lat},${entry.lng}`] = scale(similarities[i]);
+    latLngIndex[`${entry.lat},${entry.lng}`] =
+      similaritiesData[i]?.distance || 0;
   }
 
   return latLngIndex;
 }
+
 export function cosineDistance(vecA: number[], vecB: number[]): number {
   let dotProduct = 0;
   let normA = 0;

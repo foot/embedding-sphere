@@ -15,9 +15,11 @@ import { PlotData } from "./Plot";
 function App() {
   const [selected, setSelected] = useState<ExampleQuery>(exampleQueries[0]);
   const [embeddingsData, setEmbeddingsData] = useState<EmbeddingsData>([]);
-  const [displacement, setDisplacement] = useState<number>(1);
   const [animate, setAnimate] = useState<boolean>(false);
   const activeEmbedding = useQueryEmbedding(selected.query);
+
+  const [displacement, setDisplacement] = useState<number>(1);
+  const [exponent, setExponent] = useState<number>(4);
 
   useEffect(() => {
     window
@@ -50,6 +52,10 @@ function App() {
     return data;
   }, [embeddingsData, activeEmbedding]);
 
+  const similarities = similaritiesData.map((d) => d.distance);
+  const maxSimilarity = Math.max(...similarities);
+  const minSimilarity = Math.min(...similarities);
+
   const data = useMemo(() => {
     return toIndexFromEmbeddings(embeddingsData, similaritiesData);
   }, [embeddingsData, similaritiesData]);
@@ -74,11 +80,14 @@ function App() {
           animate={animate}
           setDisplacement={setDisplacement}
           displacement={displacement}
-          populationIndex={data}
+          similaritiesIndex={data}
+          minSimilarity={minSimilarity}
+          maxSimilarity={maxSimilarity}
+          exponent={exponent}
         />
 
         <div className="absolute top-4 left-4 bottom-4 shadow sm:rounded-md overflow-y-scroll">
-          <div className="px-4 py-5 bg-white space-y-6 sm:p-6">
+          <div className="px-4 py-5 bg-white sm:p-6">
             <fieldset>
               <div>
                 <legend className="text-base font-medium text-gray-900">
@@ -88,19 +97,20 @@ function App() {
                   List items have been pre-calcuated and stored
                 </p>
               </div>
+
               <EmbeddingsComboBox
                 selected={selected}
                 setSelected={setSelected}
               />
-            </fieldset>
-            <fieldset>
-              <div>
+
+              <div className="mt-4">
                 <legend className="text-base font-medium text-gray-900">
                   Displacement
                 </legend>
                 <p className="text-sm text-gray-500">How far the spikes go</p>
               </div>
-              <div className="mt-4 space-y-4">
+
+              <div className="mt-2 space-y-2">
                 <div className="flex items-center">
                   <input
                     type="range"
@@ -114,7 +124,8 @@ function App() {
                   />
                 </div>
               </div>
-              <div className="mt-4 space-y-4">
+
+              <div className="mt-2">
                 <div className="flex items-center">
                   <input
                     id="animate"
@@ -130,13 +141,45 @@ function App() {
                     htmlFor="animate"
                     className="ml-3 block text-sm font-medium text-gray-700"
                   >
-                    Animate
+                    Animate displacement
                   </label>
                 </div>
               </div>
+              <div className="mt-4">
+                <legend className="text-base font-medium text-gray-900">
+                  Scaling
+                </legend>
+                <p className="text-sm text-gray-500">
+                  How prominent matches are
+                </p>
+              </div>
+
+              <div className="mt-2">
+                <div className="flex items-center">
+                  <input
+                    type="range"
+                    min="2"
+                    max="10"
+                    value={exponent}
+                    step="0.01"
+                    onChange={(ev) => setExponent(parseFloat(ev.target.value))}
+                  />
+                </div>
+              </div>
             </fieldset>
+
+            <div className="mt-4">
+              <legend className="text-base font-medium text-gray-900">
+                Match distribution
+              </legend>
+              <p className="text-sm text-gray-500">
+                What kind of matches we got for this query
+              </p>
+            </div>
+
             <PlotData index={data} />
-            <div className="mt-4 w-96">
+
+            <div className="mt-4 w-64">
               {bestNDocs.map((similarity) => {
                 const i = similarity.index;
                 return (
