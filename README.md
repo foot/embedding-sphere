@@ -1,30 +1,35 @@
-# React + TypeScript + Vite
+# embedding-sphere
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+An experiment in visualizing embeddings on the surface of a sphere.
 
-Currently, two official plugins are available:
+While discussing [a past experiment on visualizing population data on a sphere's surface](https://github.com/foot/globen-three) with another LLM enthusiast, we wondered whether this approach could be adapted for visualizing embeddings. And so, here we are.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Running locally
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
-
-- Configure the top-level `parserOptions` property like this:
-
-```js
-export default {
-  // other rules...
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-  },
-}
+```
+pnpm install
+VITE_OPENAI_API_KEY=$OPENAI_API_KEY pnpm run dev
 ```
 
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+## Ideas to explore
+
+### Mapping high (1538) dimensional embeddings to 2D spherical surface
+
+Here we're using t-SNE ("t-distributed Stochastic Neighbourhood Embedding") to map high dimensional embeddings to 2D spherical surface. Ideally similar embeddings should be mapped to similar locations on the 2D spherical surface.
+
+This initial implementation first maps to "cartesian" coordinates (euclidean distance fn) and then projects to spherical coordinates. This unfortunately means that the points that are supposed to be furthest apart are displayed next to each other as we "wrap" our 2D plot around the sphere.
+
+- Can we adapt the t-SNE algorithm to map to spherical coordinates directly (use haversine or something as the distance fn)? Initial conversations w/ ChatGPT suggests that it's not as simple as changing a distance fn somewhere..
+- Project to 3D space and then project to the 2d surface of sphere somehow? e.g. do the final dimension reduction using some other technique.. somehow..?
+- Do the [t-SNE in the browser](https://distill.pub/2016/misread-tsne/) to explore all this stuff?
+- Pre-process w/ PCA ("Principal Component analysis") first?
+
+### Switch up the visualization
+
+In this viz we have rounded the data points to the nearest "lat, lng", in the sample data set (1000 reviews), we're only ever showing ~900 or so, as they collide when they're close together and we just take the last one.
+
+- Drop the lines-based viz method and switch to points? Build a mesh?
+
+### Write a BE
+
+We need to load in 35mb of JSON which is mostly big old embeddings.
