@@ -596,6 +596,11 @@ const iWantedAHotDog = [
   -0.022476636,
 ];
 
+export interface ExampleQuery {
+  query: string;
+  embedding: number[];
+}
+
 export const exampleQueries = [
   { query: "would recommend", embedding: wouldRecommend },
   { query: "i wanted a hot dog", embedding: iWantedAHotDog },

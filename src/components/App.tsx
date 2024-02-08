@@ -1,22 +1,23 @@
 import { takeRight } from "lodash";
 import { useEffect, useMemo, useState } from "react";
+import { ExampleQuery, exampleQueries } from "../helpers/example-queries";
 import { Globe } from "./Globe";
-import { exampleQueries } from "../helpers/example-queries";
 
 import {
   EmbeddingsData,
   cosineDistance,
   toIndexFromEmbeddings,
 } from "../helpers/embeddings";
+import { useQueryEmbedding } from "../hooks/useQueryEmbeddings";
+import { EmbeddingsComboBox } from "./EmbeddingsComboBox";
 import { PlotData } from "./Plot";
 
 function App() {
+  const [selected, setSelected] = useState<ExampleQuery>(exampleQueries[0]);
   const [embeddingsData, setEmbeddingsData] = useState<EmbeddingsData>([]);
   const [displacement, setDisplacement] = useState<number>(1);
   const [animate, setAnimate] = useState<boolean>(false);
-  const [selectedExampleQuery, setSelectedExampleQuery] = useState<string>(
-    exampleQueries[0].query
-  );
+  const activeEmbedding = useQueryEmbedding(selected.query);
 
   useEffect(() => {
     window
@@ -28,20 +29,15 @@ function App() {
   }, []);
 
   const similaritiesData = useMemo(() => {
-    console.log("similaritiesData");
-    const exampleQuery = exampleQueries.find(
-      (e) => e.query === selectedExampleQuery
-    );
-
-    if (!exampleQuery) {
-      return {} as { distance: number; index: number }[];
+    if (!activeEmbedding) {
+      return [];
     }
 
     const data = embeddingsData.map((entry, index) => {
       return {
         index,
         distance: cosineDistance(
-          exampleQuery.embedding,
+          activeEmbedding.embedding,
           JSON.parse(entry.embedding)
         ),
       };
@@ -52,7 +48,7 @@ function App() {
     });
 
     return data;
-  }, [embeddingsData, selectedExampleQuery]);
+  }, [embeddingsData, activeEmbedding]);
 
   const data = useMemo(() => {
     return toIndexFromEmbeddings(embeddingsData, similaritiesData);
@@ -86,37 +82,16 @@ function App() {
             <fieldset>
               <div>
                 <legend className="text-base font-medium text-gray-900">
-                  Example queries
+                  Look up embedding
                 </legend>
-                <p className="text-sm text-gray-500">Precaculated embeddings</p>
+                <p className="text-sm text-gray-500">
+                  List items have been pre-calcuated and stored
+                </p>
               </div>
-              <div className="mt-4 space-y-4">
-                {exampleQueries.map((eq) => {
-                  return (
-                    <div key={eq.query} className="flex items-center">
-                      <input
-                        onChange={(ev: React.ChangeEvent<HTMLInputElement>) => {
-                          return setSelectedExampleQuery(ev.target.value);
-                        }}
-                        id={eq.query}
-                        name={eq.query}
-                        value={eq.query}
-                        checked={eq.query === selectedExampleQuery}
-                        type="radio"
-                        className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300"
-                      />
-                      <label
-                        htmlFor={eq.query}
-                        className="ml-3 block text-sm font-medium text-gray-700"
-                      >
-                        {'"'}
-                        {eq.query}
-                        {'"'}
-                      </label>
-                    </div>
-                  );
-                })}
-              </div>
+              <EmbeddingsComboBox
+                selected={selected}
+                setSelected={setSelected}
+              />
             </fieldset>
             <fieldset>
               <div>
@@ -148,7 +123,6 @@ function App() {
                     checked={animate}
                     className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300"
                     onChange={(ev) => {
-                      console.log(ev.target.checked);
                       setAnimate(ev.target.checked);
                     }}
                   />

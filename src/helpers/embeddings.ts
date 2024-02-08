@@ -28,13 +28,11 @@ export function toIndexFromEmbeddings(
   const maxSimilarity = Math.max(...similarities);
   const minSimilarity = Math.min(...similarities);
 
-  console.log({ minSimilarity, maxSimilarity });
-
   const scale = d3
     .scalePow()
     .domain([minSimilarity, maxSimilarity])
     .range([0, 1])
-    .exponent(5);
+    .exponent(3);
 
   for (const [i, entry] of data.entries()) {
     if (entry.theta === 0 && entry.phi === 0) {
