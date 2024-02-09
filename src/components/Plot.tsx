@@ -48,7 +48,6 @@ export function PlotData({ similarities, onSelect }: PlotDataProps) {
     }
 
     containerRef.current.append(plot);
-    console.log("remove");
     return () => plot.remove();
   }, [similarities, onSelect]);
 

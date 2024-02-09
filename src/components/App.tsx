@@ -12,6 +12,7 @@ import { EmbeddingsComboBox } from "./EmbeddingsComboBox";
 import { DotPlot, PlotData } from "./Plot";
 import { toLatLng, toUnitSphere } from "../helpers/layout";
 import { cosineDistance } from "../helpers/embeddings";
+import { QueriesDisabledModal } from "./QueriesDisabledModal";
 
 function App() {
   const [selectedQuery, setSelectedQuery] = useState<ExampleQuery>(
@@ -23,7 +24,11 @@ function App() {
   const [embeddingsData, setEmbeddingsData] = useState<EmbeddingsData>([]);
   const [layoutData, setLayoutData] = useState<LayoutData>([]);
   const [animate, setAnimate] = useState<boolean>(false);
-  const activeEmbedding = useQueryEmbedding(selectedQuery.query);
+  const [queryError, setQueryError] = useState<string>("");
+  const onQueryError = useCallback((err: string) => {
+    setQueryError(err);
+  }, []);
+  const activeEmbedding = useQueryEmbedding(selectedQuery.query, onQueryError);
 
   const [displacement, setDisplacement] = useState<number>(1);
   const [exponent, setExponent] = useState<number>(4);
@@ -91,12 +96,21 @@ function App() {
     setSelectedLayoutPoint(index);
   }, []);
 
+  const closeQueriesDisabledModal = useCallback(() => {
+    setQueryError("");
+  }, []);
+
   if (!data) {
     return "Loading...";
   }
 
   return (
     <div className="bg-gray-100 h-screen flex flex-col">
+      <QueriesDisabledModal
+        message={queryError}
+        isOpen={Boolean(queryError)}
+        closeModal={closeQueriesDisabledModal}
+      />
       <header className="bg-white shadow">
         <div className="mx-10 my-6">
           <h1 className="text-3xl font-bold text-gray-900">Embedding Sphere</h1>
