@@ -13,7 +13,8 @@ import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
 import { blueRed } from "../shaders/shaders";
 import { range, flatten } from "lodash";
-import { LineSegments, ShaderMaterial } from "three";
+import { LineSegments, ShaderMaterial, Vector3 } from "three";
+import { Line } from "@react-three/drei";
 
 extend({ OrbitControls, EffectComposer, RenderPass, ShaderPass });
 
@@ -68,7 +69,7 @@ const DataViz: FC<DataVizProps> = ({
 
   useFrame(() => {
     if (lineSegmentsRef.current) {
-      lineSegmentsRef.current.rotation.y += 0.001;
+      // lineSegmentsRef.current.rotation.y += 0.001;
       if (animateRef.current) {
         if (displacement >= 2) {
           setDD(-0.01);
@@ -174,6 +175,7 @@ interface GlobeProps {
   exponent: number;
   minSimilarity: number;
   maxSimilarity: number;
+  hoverPoint: { lat: number; lng: number } | null;
 }
 
 export const Globe: FC<GlobeProps> = ({
@@ -184,6 +186,7 @@ export const Globe: FC<GlobeProps> = ({
   exponent,
   minSimilarity,
   maxSimilarity,
+  hoverPoint,
 }) => {
   const [hovered, setHover] = useState<boolean>(false);
 
@@ -214,6 +217,10 @@ export const Globe: FC<GlobeProps> = ({
     <Canvas>
       <color attach="background" args={["lightblue"]} />
       <ambientLight intensity={5} />
+      {hoverPoint && (
+        <RayFromCenter lat={hoverPoint.lat} lng={hoverPoint.lng} length={4} />
+      )}
+
       <Controls>
         {viz}
         <mesh
@@ -229,3 +236,21 @@ export const Globe: FC<GlobeProps> = ({
     </Canvas>
   );
 };
+
+function RayFromCenter({
+  lat,
+  lng,
+  length = 4,
+}: {
+  lat: number;
+  lng: number;
+  length?: number;
+}) {
+  const [x, y, z] = toPoint(lat, lng, length);
+
+  // Points for the line
+  const points = [new Vector3(0, 0, 0), new Vector3(x, y, z)];
+  const color = "red";
+
+  return <Line points={points} color={color} lineWidth={1} />;
+}

@@ -1,72 +1,99 @@
-import { takeRight } from "lodash";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ExampleQuery, exampleQueries } from "../helpers/example-queries";
 import { Globe } from "./Globe";
 
 import {
   EmbeddingsData,
-  cosineDistance,
+  LayoutData,
   toIndexFromEmbeddings,
-} from "../helpers/embeddings";
+} from "../helpers/layout";
 import { useQueryEmbedding } from "../hooks/useQueryEmbeddings";
 import { EmbeddingsComboBox } from "./EmbeddingsComboBox";
-import { PlotData } from "./Plot";
+import { DotPlot, PlotData } from "./Plot";
+import { toLatLng, toUnitSphere } from "../helpers/layout";
+import { cosineDistance } from "../helpers/embeddings";
 
 function App() {
-  const [selected, setSelected] = useState<ExampleQuery>(exampleQueries[0]);
+  const [selectedQuery, setSelectedQuery] = useState<ExampleQuery>(
+    exampleQueries[0]
+  );
+  const [selectedLayoutPoint, setSelectedLayoutPoint] = useState<
+    number | undefined
+  >(undefined);
   const [embeddingsData, setEmbeddingsData] = useState<EmbeddingsData>([]);
+  const [layoutData, setLayoutData] = useState<LayoutData>([]);
   const [animate, setAnimate] = useState<boolean>(false);
-  const activeEmbedding = useQueryEmbedding(selected.query);
+  const activeEmbedding = useQueryEmbedding(selectedQuery.query);
 
   const [displacement, setDisplacement] = useState<number>(1);
   const [exponent, setExponent] = useState<number>(4);
 
   useEffect(() => {
     window
-      .fetch("./fine_food_reviews_with_embeddings_1k_tsne.json")
+      .fetch("./fine_food_reviews_with_embeddings_1k.json")
       .then((res) => res.json())
       .then((d: EmbeddingsData) => {
         setEmbeddingsData(d);
       });
+
+    window
+      .fetch("./fine_food_reviews_with_embeddings_1k_tsne.json")
+      .then((res) => res.json())
+      .then((d: LayoutData) => {
+        setLayoutData(d);
+      });
   }, []);
 
-  const similaritiesData = useMemo(() => {
+  const similarities = useMemo(() => {
     if (!activeEmbedding) {
       return [];
     }
-
-    const data = embeddingsData.map((entry, index) => {
-      return {
-        index,
-        distance: cosineDistance(
-          activeEmbedding.embedding,
-          JSON.parse(entry.embedding)
-        ),
-      };
+    return embeddingsData.map((entry) => {
+      return cosineDistance(
+        activeEmbedding.embedding,
+        JSON.parse(entry.embedding)
+      );
     });
+  }, [activeEmbedding, embeddingsData]);
 
-    data.sort((a, b) => {
-      return a.distance - b.distance;
-    });
+  const latLngSelected = useMemo(() => {
+    if (!selectedLayoutPoint) {
+      return null;
+    }
 
-    return data;
-  }, [embeddingsData, activeEmbedding]);
+    const phiThetas = toUnitSphere(layoutData);
+    const latLngs = phiThetas.map(toLatLng);
+    return {
+      lat: latLngs[selectedLayoutPoint].lat,
+      lng: latLngs[selectedLayoutPoint].lng,
+    };
+  }, [selectedLayoutPoint, layoutData]);
 
-  const similarities = similaritiesData.map((d) => d.distance);
+  const data = useMemo(() => {
+    return toIndexFromEmbeddings(embeddingsData, similarities, layoutData);
+  }, [embeddingsData, similarities, layoutData]);
+
+  const bestNDocs = useMemo(() => {
+    const similaritiesData = similarities.map((distance, index) => ({
+      index,
+      distance,
+    }));
+    // revert sort
+    similaritiesData.sort((a, b) => b.distance - a.distance);
+    // take first 10
+    return similaritiesData.slice(0, 10).map((entry) => entry.index);
+  }, [similarities]);
+
   const maxSimilarity = Math.max(...similarities);
   const minSimilarity = Math.min(...similarities);
 
-  const data = useMemo(() => {
-    return toIndexFromEmbeddings(embeddingsData, similaritiesData);
-  }, [embeddingsData, similaritiesData]);
+  const onSelectLayoutPoint = useCallback((index?: number) => {
+    setSelectedLayoutPoint(index);
+  }, []);
 
   if (!data) {
     return "Loading...";
   }
-
-  // take the last 10 docs from the similarities data array
-  const bestNDocs = takeRight(similaritiesData, 10);
-  bestNDocs.reverse();
 
   return (
     <div className="bg-gray-100 h-screen flex flex-col">
@@ -84,6 +111,7 @@ function App() {
           minSimilarity={minSimilarity}
           maxSimilarity={maxSimilarity}
           exponent={exponent}
+          hoverPoint={latLngSelected}
         />
 
         <div className="absolute top-4 left-4 bottom-4 shadow sm:rounded-md overflow-y-scroll">
@@ -99,8 +127,8 @@ function App() {
               </div>
 
               <EmbeddingsComboBox
-                selected={selected}
-                setSelected={setSelected}
+                selected={selectedQuery}
+                setSelected={setSelectedQuery}
               />
 
               <div className="mt-4">
@@ -178,14 +206,31 @@ function App() {
             </div>
 
             <PlotData index={data} />
+            <DotPlot
+              similarities={similarities}
+              layoutData={layoutData}
+              onSelect={onSelectLayoutPoint}
+            />
+            <div className="mt-4">
+              <p className="text-sm text-gray-500">
+                {selectedLayoutPoint
+                  ? `${Math.round(
+                      layoutData[selectedLayoutPoint][0]
+                    )}, ${Math.round(layoutData[selectedLayoutPoint][1])} -> ${
+                      latLngSelected?.lat
+                    }, ${latLngSelected?.lng}: ${
+                      similarities[selectedLayoutPoint || 0]
+                    }`
+                  : "No point selected"}
+              </p>
+            </div>
 
             <div className="mt-4 w-64">
-              {bestNDocs.map((similarity) => {
-                const i = similarity.index;
+              {bestNDocs.map((i) => {
                 return (
                   <div key={i} className="mt-4">
                     <h2 className="text-xl font-bold text-gray-900">
-                      {similarity.distance} {embeddingsData[i].Summary}
+                      {similarities[i]} {embeddingsData[i].Summary}
                     </h2>
                     <p className="text-gray-500">{embeddingsData[i].Text}</p>
                   </div>
