@@ -205,7 +205,10 @@ function App() {
               </p>
             </div>
 
-            <PlotData index={data} />
+            <PlotData
+              similarities={similarities}
+              onSelect={onSelectLayoutPoint}
+            />
             <DotPlot
               similarities={similarities}
               layoutData={layoutData}

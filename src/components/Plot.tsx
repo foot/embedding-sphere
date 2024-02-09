@@ -1,27 +1,56 @@
 import * as Plot from "@observablehq/plot";
-import { LatLngIndex, LayoutData } from "../helpers/layout";
+import { LayoutData } from "../helpers/layout";
 import { useEffect, useRef } from "react";
 
-export function PlotData({ index }: { index: LatLngIndex }) {
+interface PlotDataProps {
+  similarities: number[];
+  onSelect: (index: number | undefined) => void;
+}
+
+export function PlotData({ similarities, onSelect }: PlotDataProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const data = Object.values(index);
-  data.sort();
 
   useEffect(() => {
     if (!containerRef.current) {
       return;
     }
 
+    const minSimilarity = Math.min(...similarities);
+    const maxSimilarity = Math.max(...similarities);
+
+    // map this onto x,y,
+    // couldn't figure out how to make Plot.crosshairX work w/ "shorthand" style data.
+    const data = [...similarities].sort().map((y, x) => ({ x, y }));
+
     const plot = Plot.plot({
       height: 200,
       width: 400,
       grid: true,
-      marks: [Plot.lineY(data)],
+      color: {
+        type: "pow",
+        scheme: "Blues",
+        domain: [minSimilarity, maxSimilarity],
+      },
+      marks: [
+        Plot.frame(),
+        // "z" to suppress a warning about high cardinalities in our color scale.
+        Plot.lineY(data, { x: "x", y: "y", stroke: "y", z: null }),
+        Plot.crosshairX(data, { x: "x", y: "y" }),
+      ],
     });
 
+    if (onSelect) {
+      plot.addEventListener("input", () => {
+        // FIXME: this feels a bit dicey..
+        const index = plot.value?.x;
+        onSelect(index);
+      });
+    }
+
     containerRef.current.append(plot);
+    console.log("remove");
     return () => plot.remove();
-  }, [data]);
+  }, [similarities, onSelect]);
 
   return <div ref={containerRef} />;
 }
