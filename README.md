@@ -2,7 +2,11 @@
 
 An experiment in visualizing embeddings on the surface of a sphere.
 
-While discussing [a past experiment on visualizing population data on a sphere's surface](https://github.com/foot/globen-three) with another LLM enthusiast, we wondered whether this approach could be adapted for visualizing embeddings. And so, here we are.
+While discussing [a past experiment on visualizing population data on a sphere's surface](https://github.com/foot/globen-three) with another LLM enthusiast, we wondered whether this approach could be adapted for visualizing embeddings. Here we are.
+
+An experiment in visualizing embeddings on the surface of a sphere.
+
+Demo: https://foot.github.io/embedding-sphere/
 
 ![image](./website/embedding-sphere-fs8.png)
 
@@ -12,6 +16,16 @@ While discussing [a past experiment on visualizing population data on a sphere's
 pnpm install
 VITE_OPENAI_API_KEY=$OPENAI_API_KEY pnpm run dev
 ```
+
+Optionally provide `VITE_OPENAI_API_KEY` to lookup embeddings of queries in the browser and see how they match the embedding dataset.
+
+## Whats going on
+
+Not too much new, we start off from [OpenAI's _Visualizing the embeddings in 2D_ notebook](https://github.com/openai/openai-cookbook/blob/main/examples/Visualizing_embeddings_in_2D.ipynb). It takes the classic _fine food reviews_ dataset and plots the embeddings in 2D.
+
+We do this here in `generate_2d_embeddings.py` and write the layout to JSON. Then we load all the 1000 embeddings and tSNE layout data into the browser and play around with rendering it.
+
+You can then lookup the embeddings of given query, the similarity of the query to the dataset is shown on the sphere.
 
 ## Ideas to explore
 
