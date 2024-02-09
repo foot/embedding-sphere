@@ -2,9 +2,7 @@
 
 An experiment in visualizing embeddings on the surface of a sphere.
 
-While discussing [a past experiment on visualizing population data on a sphere's surface](https://github.com/foot/globen-three) with another LLM enthusiast, we wondered whether this approach could be adapted for visualizing embeddings. Here we are.
-
-An experiment in visualizing embeddings on the surface of a sphere.
+While discussing [a past experiment on visualizing population data on a sphere's surface](https://github.com/foot/globen-three) with another LLM enthusiast, they wondered whether this approach could be adapted for visualizing embeddings. Here we are.
 
 Demo: https://foot.github.io/embedding-sphere/
 
