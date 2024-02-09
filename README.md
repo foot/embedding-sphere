@@ -4,6 +4,8 @@ An experiment in visualizing embeddings on the surface of a sphere.
 
 While discussing [a past experiment on visualizing population data on a sphere's surface](https://github.com/foot/globen-three) with another LLM enthusiast, we wondered whether this approach could be adapted for visualizing embeddings. And so, here we are.
 
+![image](./website/embedding-sphere-fs8.png)
+
 ## Running locally
 
 ```
